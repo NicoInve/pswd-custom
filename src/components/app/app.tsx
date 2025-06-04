@@ -56,6 +56,10 @@ export function App() {
     'pswd-include-symbols',
     true,
   );
+  const [includeOnlyExclamationMark, setIncludeOnlyExclamationMark] = useLocalStorage(
+    'pswd-include-only-exclamation-mark',
+    true,
+  );
   const [excludeSimilar, setExcludeSimilar] = useLocalStorage(
     'pswd-exclude-similar',
     false,
@@ -129,7 +133,8 @@ export function App() {
       if (includeUpper) characterSet += UPPERCASE;
       if (includeLower) characterSet += LOWERCASE;
       if (includeNumbers) characterSet += NUMBERS;
-      if (includeSymbols) characterSet += SYMBOLS;
+      if (includeSymbols && !includeOnlyExclamationMark) characterSet += SYMBOLS;
+      if (includeSymbols && includeOnlyExclamationMark) characterSet += '!'.repeat(Math.ceil(length / 2));
 
       if (customSymbols) {
         characterSet += customSymbols;
@@ -163,6 +168,30 @@ export function App() {
       for (let i = 0; i < length; i++) {
         const randomIndex = getSecureRandomInt(charsetLength);
         passwordCharacters.push(characterSet[randomIndex]);
+      }
+
+      if(!passwordCharacters.includes('!') && includeOnlyExclamationMark) {
+        for(let i = 0; i < 2; i++) {
+          const exclamationMarkIndex = getSecureRandomInt(length);
+          passwordCharacters[exclamationMarkIndex] = '!';
+        }
+      }
+
+      if(passwordCharacters.filter(char => char === '!').length > Math.round(length / 4) && includeOnlyExclamationMark) {
+        const exclamationMarkIndices = [];
+        for(let i = 0; i < passwordCharacters.length; i++) {
+          if(passwordCharacters[i] === '!') {
+            exclamationMarkIndices.push(i);
+          }
+        }
+
+        const indicesToRemove = exclamationMarkIndices.slice(
+          Math.round(length / 4),
+        );
+
+        for(const index of indicesToRemove) {
+          passwordCharacters[index] = characterSet[getSecureRandomInt(charsetLength)];
+        }
       }
 
       const newPassword = passwordCharacters.join('');
@@ -248,6 +277,7 @@ export function App() {
     includeLower,
     includeNumbers,
     includeSymbols,
+    includeOnlyExclamationMark,
     length,
     wordCount,
     activeTab,
@@ -426,18 +456,31 @@ export function App() {
 
               <label className={styles.checkbox}>
                 <Checkbox
+                  checked={excludeSimilar}
+                  onChange={checked => setExcludeSimilar(checked)}
+                />
+                Exclude Similar Characters (e.g., l, 1, O, 0)
+              </label>
+
+              <label className={styles.checkbox}>
+                <Checkbox
                   checked={includeSymbols}
-                  onChange={checked => setIncludeSymbols(checked)}
+                  onChange={checked => {
+                      setIncludeSymbols(checked)
+                      setIncludeOnlyExclamationMark(includeOnlyExclamationMark && checked);
+                    }
+                  }
                 />
                 Include Symbols
               </label>
 
               <label className={styles.checkbox}>
                 <Checkbox
-                  checked={excludeSimilar}
-                  onChange={checked => setExcludeSimilar(checked)}
+                  checked={includeOnlyExclamationMark}
+                  onChange={checked => setIncludeOnlyExclamationMark(checked)}
+                  disabled={!includeSymbols}
                 />
-                Exclude Similar Characters (e.g., l, 1, O, 0)
+                Include only exclamation mark (!)
               </label>
 
               <div className={styles.custom}>

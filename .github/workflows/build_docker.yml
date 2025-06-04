@@ -16,8 +16,8 @@ jobs:
       - name: 'Login to GitHub Container Registry'
         uses: docker/login-action@v1
         with:
-          registry: ghcr.io
-          username: ${{github.actor}}
+          registry: docker.io
+          username: nicoinve
           password: ${{secrets.ACCESS_TOKEN}}
 
       - name: Set up QEMU
@@ -28,7 +28,7 @@ jobs:
 
       - name: 'Build and push Inventory Image'
         run: |
-          IMAGE_NAME="ghcr.io/remvze/pswd"
+          IMAGE_NAME="nicoinve/pswd-custom"
 
           GIT_TAG=${{ github.ref }}
           GIT_TAG=${GIT_TAG#refs/tags/}
